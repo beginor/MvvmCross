@@ -88,14 +88,19 @@ namespace Cirrious.MvvmCross.Mac.Platform
 			return new MvxPostfixAwareViewToViewModelNameMapping("View", "ViewController");
 		}
 
-        protected sealed override MvxViewsContainer CreateViewsContainer()
+        protected sealed override IMvxViewsContainer CreateViewsContainer()
         {
-			var container = new MvxMacViewsContainer();
+            var container = CreateMacViewsContainer();
             RegisterMacViewCreator(container);            
             return container;
         }
 
-        protected void RegisterMacViewCreator(MvxMacViewsContainer container)
+        protected virtual IMvxMacViewsContainer CreateMacViewsContainer()
+        {
+            return new MvxMacViewsContainer();
+        }
+
+        protected void RegisterMacViewCreator(IMvxMacViewsContainer container)
         {
             Mvx.RegisterSingleton<IMvxMacViewCreator>(container);
 			Mvx.RegisterSingleton<IMvxCurrentRequest>(container);
