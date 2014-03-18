@@ -20,7 +20,41 @@ namespace Cirrious.MvvmCross.Plugins.File.WindowsStore
     // note that we use the full WindowsStore name here deliberately to avoid 'Store' naming confusion
     public class MvxWindowsStoreBlockingFileStore : IMvxFileStore
     {
-        #region IMvxFileStore Members
+        public Stream OpenRead(string path)
+        {
+            try
+            {
+                var storageFile = StorageFileFromRelativePath(path);
+                var streamWithContentType = storageFile.OpenReadAsync().Await();
+                return streamWithContentType.AsStreamForRead();
+            }
+            catch (Exception exception)
+            {
+                MvxTrace.Trace("Error during file load {0} : {1}", path, exception.ToLongString());
+                return null;
+            }
+        }
+
+        public Stream OpenWrite(string path)
+        {
+            try
+            {
+                StorageFile storageFile;
+                
+                if (Exists(path))
+                    storageFile = StorageFileFromRelativePath(path);
+                else
+                    storageFile = CreateStorageFileFromRelativePath(path);
+
+                var streamWithContentType = storageFile.OpenAsync(FileAccessMode.ReadWrite).Await();
+                return streamWithContentType.AsStream();
+            }
+            catch (Exception exception)
+            {
+                MvxTrace.Trace("Error during file save {0} : {1}", path, exception.ToLongString());
+                throw;
+            }
+        }
 
         public bool TryReadTextFile(string path, out string contents)
         {
@@ -236,9 +270,7 @@ namespace Cirrious.MvvmCross.Plugins.File.WindowsStore
             }
         }
 
-        #endregion
-
-        private static void WriteFileCommon(string path, Action<Stream> streamAction)
+        private void WriteFileCommon(string path, Action<Stream> streamAction)
         {
             // from https://github.com/MvvmCross/MvvmCross/issues/500 we delete any existing file
             // before writing the new one
@@ -258,7 +290,7 @@ namespace Cirrious.MvvmCross.Plugins.File.WindowsStore
             }
         }
 
-        private static bool TryReadFileCommon(string path, Func<Stream, bool> streamAction)
+        private bool TryReadFileCommon(string path, Func<Stream, bool> streamAction)
         {
             try
             {
